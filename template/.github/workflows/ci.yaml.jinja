@@ -1,0 +1,19 @@
+# Calls the shared CI workflow in py-dev-standards. Everything it runs is a
+# `make` target, so CI and your machine check the same things.
+name: CI
+
+on:
+  push:
+    branches: [devel, main]
+  pull_request:
+    branches: [devel, main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: campbio/py-dev-standards/.github/workflows/ci.yaml@v1
+    with:
+      python-versions: '{{ python_versions | tojson }}'
+      primary-python-version: "{{ python_versions[-1] }}"

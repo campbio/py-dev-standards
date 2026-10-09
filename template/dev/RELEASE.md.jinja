@@ -1,0 +1,61 @@
+# Releasing {{ package_name }}
+
+A release is a person's job from start to finish. An agent may prepare the
+release branch when asked, but never tags, pushes to `main`, or publishes.
+
+`devel` holds everything merged since the last release. `main` is the released
+state and is what a bare `pip install git+...` gets, so nothing reaches it
+except through this process.
+
+## 1. Prepare on a branch off `devel`
+
+1. `git switch devel && git pull && git switch -c release/<version>`
+2. Set the final version in `pyproject.toml`. Semantic versioning: patch for
+   fixes, minor for backward-compatible additions, major for breaking changes.
+3. In `CHANGELOG.md`, rename `## Unreleased` to `## <version> - YYYY-MM-DD`
+   and add a fresh, empty `## Unreleased` above it. Remove empty subsections.
+   Read the entries as a user would: every behavior change must be there.
+{%- if zenodo %}
+4. Update `version` and `date-released` in `CITATION.cff`.
+{%- endif %}
+5. Confirm every deprecation that was due this release has been advanced:
+   warnings added one minor version ago are now removals.
+6. `make check-full`, then `make docs-links`.
+7. Run `/security-review` on the release diff.
+8. Open a pull request into `devel` and merge it once CI is green.
+
+## 2. Promote to `main`
+
+1. Open a pull request from `devel` into `main` titled `Release <version>`.
+   This is the only pull request that ever targets `main`.
+2. Merge it after CI is green. Do not squash: `main` should keep the history.
+
+## 3. Tag and publish
+
+1. Tag the merge commit on `main`:
+   `git switch main && git pull && git tag -a v<version> -m "<version>" && git push origin v<version>`
+2. Create a GitHub Release from that tag and paste the changelog section into
+   its notes.
+{%- if publish_pypi %}
+3. Publishing the release starts the `release` workflow, which builds the
+   sdist and wheel and uploads them to PyPI through trusted publishing. Watch
+   the run, then confirm the new version is on PyPI and that
+   `pip install {{ package_name }}==<version>` works in a clean environment.
+{%- endif %}
+{%- if zenodo %}
+4. Confirm Zenodo archived the release and record the new DOI in `README.md`
+   and `CITATION.cff` (that last edit goes on `devel`, in the next release).
+{%- endif %}
+{%- if publish_conda %}
+5. The conda-forge or bioconda bot opens a version-bump pull request on the
+   feedstock within a few hours. Review it, update the dependencies and tests
+   in `meta.yaml` if they changed, and merge.
+{%- endif %}
+
+## 4. Afterwards
+
+1. Confirm Read the Docs built the new tag and that `stable` points at it.
+2. `git switch devel && git merge --ff-only main` is not needed: `main` has no
+   commits `devel` lacks. If it somehow does, merge `main` into `devel` by
+   pull request rather than locally.
+3. Announce the release wherever the lab tracks software.

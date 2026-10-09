@@ -1,0 +1,22 @@
+@AGENTS.md
+
+# Before you start
+
+If the import above was not expanded for you, read these two files yourself,
+in this order, and follow them:
+
+1. `dev/standards.md` — the development standards for this package: the
+   workflow, the branch model, which commands may be run, and what must never
+   be edited.
+2. `AGENTS.md` — what is specific to {{ package_name }}.
+
+You are not running under `.claude/settings.json`, so nothing stops you
+mechanically from doing something irreversible. The standards still apply in
+full. In particular:
+
+- Make no edits during evaluation. Report what you found and wait.
+- Branch from `devel`. Never work on `devel` or `main`.
+- Run only `make` targets. Never run `pytest`, `ruff`, `mypy`, `pip`, `uv`, or
+  `sphinx-build` directly.
+- Never push, open a pull request, merge, delete a file or branch, force-push,
+  or move a tag. Hand the work back to the developer and let them decide.

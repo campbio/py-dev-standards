@@ -1,0 +1,15 @@
+"""Fixtures shared by the test suite.
+
+Keep fixtures small and literal. A test that needs a large input usually wants
+a smaller input instead.
+"""
+
+from __future__ import annotations
+
+import pytest
+
+
+@pytest.fixture
+def dna_sequence() -> str:
+    """A short DNA sequence whose GC content is exactly 0.5."""
+    return "ACGTACGT"

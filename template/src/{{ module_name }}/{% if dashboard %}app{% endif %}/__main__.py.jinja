@@ -1,0 +1,35 @@
+"""Entry point for `{{ package_name }}-app` and `python -m {{ module_name }}.app`."""
+
+from __future__ import annotations
+
+# Launching the framework's own dev server; nothing here takes user input.
+import subprocess
+import sys
+from pathlib import Path
+
+
+def main() -> None:
+    """Start the dashboard server and block until it stops.
+
+    The server is started in a subprocess rather than through the framework's
+    Python API, because those APIs change between minor versions while the
+    command line does not.
+    """
+    app_script = Path(__file__).with_name("main.py")
+    command = [
+        sys.executable,
+        "-m",
+{%- if dashboard_framework == "streamlit" %}
+        "streamlit",
+        "run",
+{%- else %}
+        "shiny",
+        "run",
+{%- endif %}
+        str(app_script),
+    ]
+    raise SystemExit(subprocess.call(command))
+
+
+if __name__ == "__main__":
+    main()

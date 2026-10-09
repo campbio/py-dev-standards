@@ -1,0 +1,90 @@
+# Shared CI workflow. Packages call it from their own .github/workflows/ci.yaml:
+#
+#   jobs:
+#     ci:
+#       uses: campbio/py-dev-standards/.github/workflows/ci.yaml@v1
+#       with:
+#         python-versions: '["3.11", "3.12", "3.13"]'
+#
+# It only ever runs `make` targets, so CI and a developer's machine run exactly
+# the same checks with the same settings.
+
+# Action versions are the newest floating major tag each action publishes, so
+# patch and minor fixes arrive without a change here. astral-sh/setup-uv stops
+# publishing major tags after v7 even though it has released further, so v7 is
+# deliberate rather than stale; it already runs on Node 24.
+name: CI
+
+on:
+  workflow_call:
+    inputs:
+      python-versions:
+        description: JSON array of Python versions to run the test suite on.
+        type: string
+        default: '["3.11", "3.12", "3.13"]'
+      primary-python-version:
+        description: Version used for lint, typecheck, coverage and docs.
+        type: string
+        default: "3.12"
+      docs:
+        description: Build and check the documentation.
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint and typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: ${{ inputs.primary-python-version }}
+      - run: make lint
+      - run: make typecheck
+
+  test:
+    name: Test on Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ${{ fromJSON(inputs.python-versions) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
+      - run: make test
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: ${{ inputs.primary-python-version }}
+      # The floor is COV_MIN in the package's Makefile, so the number lives
+      # with the package rather than in this shared file.
+      - run: make coverage
+
+  docs:
+    name: Documentation
+    if: inputs.docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: ${{ inputs.primary-python-version }}
+      # Warnings are errors here and on Read the Docs, and every public object
+      # must appear in docs/api.md.
+      - run: make docs-check

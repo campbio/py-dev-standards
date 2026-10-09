@@ -1,0 +1,87 @@
+# {{ package_name }}: notes for coding agents
+
+**Read `dev/standards.md` before doing anything.** It holds the development
+standards every change to this package follows: the workflow, the branch model,
+which commands you may run, and what you must never touch. In Claude Code it is
+also loaded automatically at session start. This file adds only what is
+specific to {{ package_name }}.
+
+When this file and `dev/standards.md` disagree, the "Overrides" section at the
+bottom wins and nothing else here does.
+
+## About
+
+<One or two sentences: what the package does and who uses it.>
+
+## Layout
+
+- `src/{{ module_name }}/` — the package. Public API is re-exported from
+  `__init__.py` and listed in `__all__`.
+{%- if dashboard %}
+- `src/{{ module_name }}/app/` — the dashboard (see below).
+{%- endif %}
+- `tests/` — pytest suite, fixtures in `conftest.py`.
+- `docs/` — Sphinx sources; `docs/api.md` is the index of public objects.
+- `dev/` — maintainer material: standards, plans, ADRs, release steps, hooks.
+
+<Add the main modules and what each is for. Note any compiled code, Cython, or
+generated files.>
+
+## Public API
+
+<The functions and classes users call, and the main data structures passed
+between them. Note any objects that look public but are not.>
+
+## Data
+
+<Bundled datasets, their loaders, and where large downloads come from. Write
+"None" if the package has no data.>
+
+## Tests
+
+<Slow test files to avoid during development, where fixtures live, and any
+optional dependencies that tests skip without.>
+
+{% if dashboard -%}
+## Dashboard
+
+- Framework: **{% if dashboard_framework == "streamlit" %}Streamlit{% else %}Shiny for Python{% endif %}**. Changing it needs an ADR.
+- Lives in `src/{{ module_name }}/app/`, installed by the `app` extra
+  (`pip install {{ package_name }}[app]`).
+- Start it with `make app`. It runs until stopped, so ask the developer first.
+- Run its tests with `make app-test` (the `app` pytest marker).
+{%- if dashboard_framework == "streamlit" %}
+- Tested with `streamlit.testing.v1.AppTest`, which runs the script headlessly.
+{%- else %}
+- Server logic is unit-tested directly; browser flows use the Shiny Playwright
+  controllers.
+{%- endif %}
+- The app holds no analysis logic. Every computation it shows comes from a
+  public, tested function in `src/{{ module_name }}/`. A new feature is written
+  and tested as a package function first, then wired into the app.
+- Verify any visual change with a Playwright screenshot of the running app.
+
+{% endif -%}
+## Extra make targets
+
+<Targets beyond the standard set, what each does, and whether agents may run it
+without asking (e.g. "`bench`: runs the benchmark suite, takes 20 minutes; ask
+first", "`clean`: deletes build output; people only"). Safe targets go in the
+allow list in `.claude/settings.json` and people-only ones in `PEOPLE_ONLY` in
+the Makefile and the settings deny list. Write "None" if there are none.>
+
+## Setup in a new worktree
+
+`make sync`. <Add anything else a fresh checkout needs before tests run, e.g. a
+downloaded reference dataset. Write "Nothing else" if that's all.>
+
+## Related packages
+
+<Packages that depend on this one or share code with it, and what to check
+there when this package changes. Each related package lists this one too,
+describing the relationship the same way. Write "None" if there are none.>
+
+## Overrides
+
+<Deliberate exceptions to `dev/standards.md`, each with a reason. Write "None"
+if there are none.>

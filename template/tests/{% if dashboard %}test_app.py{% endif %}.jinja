@@ -1,0 +1,66 @@
+"""Tests for the dashboard.
+
+These are marked `app` so `make app-test` can run them on their own. They check
+the wiring only: that the app starts and shows what the package computed. The
+computation itself is tested in the package's own test modules.
+"""
+
+from __future__ import annotations
+
+{% if dashboard_framework == "streamlit" -%}
+from pathlib import Path
+
+import pytest
+from streamlit.testing.v1 import AppTest
+
+APP_SCRIPT = Path(__file__).parent.parent / "src" / "{{ module_name }}" / "app" / "main.py"
+
+
+@pytest.mark.app
+def test_app_starts_without_error() -> None:
+    app = AppTest.from_file(str(APP_SCRIPT), default_timeout=30).run()
+    assert not app.exception
+
+
+@pytest.mark.app
+def test_app_reports_the_gc_content_of_the_entered_sequence() -> None:
+    app = AppTest.from_file(str(APP_SCRIPT), default_timeout=30).run()
+    app.text_input[0].set_value("GGCC").run()
+    assert "100.0%" in app.markdown[-1].value
+
+
+@pytest.mark.app
+def test_app_shows_an_error_for_an_invalid_sequence() -> None:
+    app = AppTest.from_file(str(APP_SCRIPT), default_timeout=30).run()
+    app.text_input[0].set_value("ACGTXZ").run()
+    assert not app.exception
+    assert "X, Z" in app.error[0].value
+{%- else -%}
+import pytest
+from shiny import App
+
+from {{ module_name }}.app.main import app, format_gc_summary
+
+
+@pytest.mark.app
+def test_app_is_constructed() -> None:
+    # Importing the module builds the UI, so a mistake in the layout or in an
+    # import fails here rather than in the browser.
+    assert isinstance(app, App)
+
+
+@pytest.mark.app
+def test_app_reports_the_gc_content_of_the_entered_sequence() -> None:
+    assert format_gc_summary("GGCC") == "GC content: 100.0%"
+
+
+@pytest.mark.app
+def test_app_explains_an_invalid_sequence_instead_of_failing() -> None:
+    assert "X, Z" in format_gc_summary("ACGTXZ")
+
+
+# The reactive callback itself only runs inside a browser session. Flows that
+# need one (typing into the field and reading the rendered output) use the
+# Shiny Playwright controllers; add them here as the app grows, and keep them
+# marked `app` so `make test` stays fast.
+{%- endif %}

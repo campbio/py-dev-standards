@@ -1,0 +1,50 @@
+# Shared workflow: warn when a package's committed dev/standards.md no longer
+# matches the standards it pins.
+#
+#   jobs:
+#     standards:
+#       uses: campbio/py-dev-standards/.github/workflows/standards-drift.yaml@v1
+#
+# Claude Code always reads the current standards through its session hook, but
+# other agents read the committed copy. This keeps the two from diverging
+# silently. It warns rather than fails: a stale copy is a chore, not a defect
+# in the change under review.
+
+# Action versions are the newest floating major tag each action publishes, so
+# patch and minor fixes arrive without a change here. astral-sh/setup-uv stops
+# publishing major tags after v7 even though it has released further, so v7 is
+# deliberate rather than stale; it already runs on Node 24.
+name: Standards drift
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Tag or branch of py-dev-standards the package pins.
+        type: string
+        default: v1
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Committed standards are current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Compare dev/standards.md with the pinned standards
+        run: |
+          set -euo pipefail
+          url="https://raw.githubusercontent.com/campbio/py-dev-standards/${{ inputs.ref }}/standards.md"
+          curl -fsSL --max-time 30 "$url" -o /tmp/standards.md
+          if [ ! -f dev/standards.md ]; then
+            echo "::warning::dev/standards.md is missing. Run 'make standards-sync' and commit it."
+            exit 0
+          fi
+          if diff -q /tmp/standards.md dev/standards.md > /dev/null; then
+            echo "dev/standards.md matches py-dev-standards@${{ inputs.ref }}."
+          else
+            echo "::warning::dev/standards.md differs from py-dev-standards@${{ inputs.ref }}. Run 'make standards-sync' and commit the result."
+            diff -u dev/standards.md /tmp/standards.md || true
+          fi

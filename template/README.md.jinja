@@ -1,0 +1,87 @@
+# {{ package_name }}
+
+{{ package_description }}
+
+[![Documentation](https://readthedocs.org/projects/{{ package_name }}/badge/?version=stable)](https://{{ package_name }}.readthedocs.io/en/stable/)
+[![CI](https://github.com/{{ github_org }}/{{ package_name }}/actions/workflows/ci.yaml/badge.svg?branch=devel)](https://github.com/{{ github_org }}/{{ package_name }}/actions/workflows/ci.yaml)
+{%- if publish_pypi %}
+[![PyPI](https://img.shields.io/pypi/v/{{ package_name }})](https://pypi.org/project/{{ package_name }}/)
+{%- endif %}
+
+## Installation
+
+{% if publish_pypi -%}
+```bash
+pip install {{ package_name }}
+```
+{%- if publish_conda %}
+
+Or with conda:
+
+```bash
+conda install -c conda-forge {{ package_name }}
+```
+{%- endif %}
+{%- if dashboard %}
+
+To use the dashboard as well:
+
+```bash
+pip install "{{ package_name }}[app]"
+```
+{%- endif %}
+{%- else -%}
+```bash
+pip install git+https://github.com/{{ github_org }}/{{ package_name }}
+```
+{%- endif %}
+
+The default branch, `main`, is always the most recent release, so the command
+above installs released code. To install in-progress work, ask for `devel`
+explicitly:
+
+```bash
+pip install "git+https://github.com/{{ github_org }}/{{ package_name }}@devel"
+```
+
+## Getting started
+
+<A short example: the smallest piece of real code that shows what the package
+is for. Keep it runnable as pasted.>
+
+See the [documentation](https://{{ package_name }}.readthedocs.io) for
+tutorials and the full API reference.
+
+{% if dashboard -%}
+## Dashboard
+
+{{ package_name }} ships a {% if dashboard_framework == "streamlit" %}Streamlit{% else %}Shiny{% endif %} app for exploring results interactively:
+
+```bash
+{{ package_name }}-app
+```
+
+{% endif -%}
+## Development
+
+This package follows the Campbell lab
+[Python development standards](https://github.com/campbio/py-dev-standards).
+Everything a contributor — or a coding agent — needs is in `AGENTS.md` and
+`dev/standards.md`.
+
+```bash
+make sync     # install the package and all development dependencies
+make check    # lint, typecheck and test
+make help     # list every target
+```
+
+Work happens on branches off `devel`, and pull requests target `devel`.
+`main` only ever moves at a release.
+
+## Citation
+
+<How to cite this package. Replace once there is a paper or a DOI.>
+
+## License
+
+MIT. See [LICENSE](LICENSE).

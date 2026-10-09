@@ -1,0 +1,18 @@
+# Warns when dev/standards.md falls behind the shared standards. Agents other
+# than Claude Code read that committed copy, so it needs to stay current.
+name: Standards drift
+
+on:
+  pull_request:
+    branches: [devel]
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  standards:
+    uses: campbio/py-dev-standards/.github/workflows/standards-drift.yaml@v1
+    with:
+      ref: v1

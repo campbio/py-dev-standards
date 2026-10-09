@@ -1,0 +1,46 @@
+# Contributing
+
+{{ package_name }} follows the Campbell lab
+[Python development standards](https://github.com/campbio/py-dev-standards).
+The full rules are in `dev/standards.md` in the repository, and what is
+specific to this package is in `AGENTS.md`. They apply to people and to coding
+agents alike.
+
+## Setting up
+
+```bash
+git clone https://github.com/{{ github_org }}/{{ package_name }}
+cd {{ package_name }}
+git switch devel
+make sync
+make check
+```
+
+`make help` lists every target. Use the targets rather than calling `pytest`,
+`ruff` or `sphinx-build` directly, so everyone runs the same checks with the
+same settings.
+
+## Making a change
+
+1. Branch from `devel`, named `fix/<topic>` or `feature/<topic>`. Never work on
+   `devel` or `main`.
+2. Write a failing test first, then the code that passes it.
+3. Add an entry to `CHANGELOG.md` under `## Unreleased` for anything a user
+   would notice, and bump the version in `pyproject.toml`.
+4. Add any new public object to `docs/api.md`.
+5. Run `make check` as you go and `make check-full` before opening the pull
+   request.
+6. Open the pull request against `devel`. `main` moves only at a release.
+
+Decisions that are hard to reverse — a new dependency, a change to the public
+API, a reorganization of the modules — get an
+[architecture decision record](https://github.com/{{ github_org }}/{{ package_name }}/tree/devel/dev/adr)
+before the work starts.
+
+## Working with a coding agent
+
+Start the agent from the repository root so it picks up the standards. Claude
+Code loads them automatically; other agents are told to read `dev/standards.md`
+by `AGENTS.md` and `GEMINI.md`. Review what the agent produces the same way you
+would review a colleague's branch: the standards stop before anything is
+pushed, and that pause is yours.

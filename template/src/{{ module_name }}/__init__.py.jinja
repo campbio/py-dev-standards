@@ -1,0 +1,16 @@
+"""{{ package_description }}"""
+
+from __future__ import annotations
+
+from importlib.metadata import PackageNotFoundError, version
+
+from {{ module_name }}.example import gc_content
+
+try:
+    __version__ = version("{{ package_name }}")
+except PackageNotFoundError:  # pragma: no cover - only when running from source
+    __version__ = "0.0.0+unknown"
+
+# Everything listed here is public API: documented in docs/api.md, covered by
+# tests, and removable only after a deprecation period.
+__all__ = ["__version__", "gc_content"]

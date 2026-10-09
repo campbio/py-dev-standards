@@ -1,0 +1,42 @@
+from __future__ import annotations
+
+import pytest
+
+from {{ module_name }} import gc_content
+
+
+def test_gc_content_counts_g_and_c(dna_sequence: str) -> None:
+    assert gc_content(dna_sequence) == 0.5
+
+
+@pytest.mark.parametrize(
+    ("sequence", "expected"),
+    [("GGCC", 1.0), ("ATAT", 0.0), ("GATC", 0.5)],
+)
+def test_gc_content_handles_the_extremes(sequence: str, expected: float) -> None:
+    assert gc_content(sequence) == expected
+
+
+def test_gc_content_ignores_case() -> None:
+    assert gc_content("acgt") == gc_content("ACGT")
+
+
+def test_gc_content_ignores_ambiguous_bases() -> None:
+    # N carries no base-composition information, so it must not dilute the
+    # result the way counting it as a mismatch would.
+    assert gc_content("GCNN") == 1.0
+
+
+def test_gc_content_rejects_a_non_string() -> None:
+    with pytest.raises(TypeError, match="sequence must be a string"):
+        gc_content(42)  # type: ignore[arg-type]
+
+
+def test_gc_content_rejects_letters_that_are_not_bases() -> None:
+    with pytest.raises(ValueError, match="found X, Z"):
+        gc_content("ACGTXZ")
+
+
+def test_gc_content_rejects_a_sequence_with_nothing_to_measure() -> None:
+    with pytest.raises(ValueError, match="no A, C, G or T bases"):
+        gc_content("NNNN")

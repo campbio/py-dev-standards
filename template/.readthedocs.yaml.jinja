@@ -1,0 +1,24 @@
+# Read the Docs build configuration.
+#
+# Version mapping, set once in the Read the Docs project admin (see ADOPTING.md):
+#   latest  <- the devel branch   (documentation for work in progress)
+#   stable  <- the newest tag     (documentation for the released version)
+# `stable` is the default version readers land on.
+
+version: 2
+
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "{{ python_versions[0] }}"
+  jobs:
+    install:
+      # uv installs the project and its docs dependency group from uv.lock, so
+      # a docs build uses exactly the versions `make docs` uses locally.
+      - pip install uv
+      - uv sync --group docs --frozen
+    build:
+      html:
+        # -W matches `make docs-check`: a warning here is a failed build, not
+        # a quietly broken page.
+        - uv run --no-sync sphinx-build -b html -W --keep-going -n docs $READTHEDOCS_OUTPUT/html
