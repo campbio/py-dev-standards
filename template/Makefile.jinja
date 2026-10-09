@@ -7,7 +7,8 @@
 
 # Package settings. Uncomment or change to override a default (see
 # standards.mk for what each one does).
-COV_MIN  := {{ coverage_min }}
+COV_MIN    := {{ coverage_min }}
+PKG_IMPORT := {{ module_name }}
 # DOCS_DIR := docs
 # PKG_SRC  := src
 {% if dashboard %}

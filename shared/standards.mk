@@ -11,12 +11,15 @@
 #   APP_SELECT    pytest selector for `make app-test` (default: -m app)
 #   DOCS_DIR      documentation source directory (default: docs)
 #   PKG_SRC       directory mypy type-checks (default: src)
+#   PKG_IMPORT    import name of the package, used to check that everything in
+#                 __all__ appears on the API page (unset: that check is skipped)
 
 COV_MIN    ?= 0
 APP_CMD    ?=
 APP_SELECT ?= -m app
 DOCS_DIR   ?= docs
 PKG_SRC    ?= src
+PKG_IMPORT ?=
 
 UV ?= uv
 # --locked syncs the environment from uv.lock but refuses to re-resolve, so an
@@ -88,19 +91,21 @@ docs:  ## Build the HTML documentation into a temp folder
 	  echo "Built into $$out"
 
 # -W turns warnings into errors (same as Read the Docs' fail_on_warning) and
-# -n reports every unresolvable cross-reference. The coverage builder then
-# fails the target if any public object is missing from the API pages.
+# -n reports every unresolvable cross-reference. The second step is the
+# equivalent of pkgdown's reference-index check: every name the package
+# exports in __all__ must appear on the API page, so a new public function
+# cannot be added without documenting it. (sphinx.ext.coverage measures
+# something else -- whether a module was documented with automodule -- and
+# reports every object as missing when the API page uses autosummary.)
 docs-check:  ## Build docs with warnings as errors and verify every public object is documented
 	@out="$$(mktemp -d)"; \
 	  $(RUN) sphinx-build -b html -W --keep-going -n "$(DOCS_DIR)" "$$out/html" || exit 1; \
-	  $(RUN) sphinx-build -b coverage "$(DOCS_DIR)" "$$out/coverage" > /dev/null || exit 1; \
-	  if grep -q '^ \* ' "$$out/coverage/python.txt" 2> /dev/null; then \
-	    echo "Public objects missing from the API documentation:"; \
-	    grep '^ \* ' "$$out/coverage/python.txt"; \
-	    echo "Add them to $(DOCS_DIR)/api.md."; \
-	    exit 1; \
-	  fi; \
-	  echo "Docs OK."
+	  echo "Documentation built without warnings."
+	@if [ -z "$(PKG_IMPORT)" ]; then \
+	  echo "PKG_IMPORT is unset in the Makefile, so the API page was not checked."; \
+	else \
+	  $(RUN) python -c "import importlib, pathlib, re, sys; module = importlib.import_module(sys.argv[1]); names = [n for n in getattr(module, '__all__', []) if not n.startswith('_')]; page = pathlib.Path(sys.argv[2]).read_text(); missing = [n for n in names if not re.search(r'(?<![\w.])' + re.escape(n) + r'\b', page)]; sys.exit('Public objects missing from ' + sys.argv[2] + ': ' + ', '.join(missing) + '. Add them so they appear in the reference.') if missing else print('Every public object appears in ' + sys.argv[2] + '.')" "$(PKG_IMPORT)" "$(DOCS_DIR)/api.md"; \
+	fi
 
 # Kept out of check-full: linkcheck needs the network, so a flaky host or an
 # offline machine would fail a gate that has nothing to do with the change.

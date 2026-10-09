@@ -3,14 +3,19 @@
 Every public object in {{ package_name }} is listed here. Adding a public
 object means adding it to this page too; `make docs-check` fails otherwise.
 
-```{currentmodule} {{ module_name }}
-```
+The listing below is written as reStructuredText inside an `eval-rst` block,
+because autosummary finds the objects to document by scanning the source text
+for `.. autosummary::`. It does not recognise the MyST spelling of the same
+directive, and the stub pages are then silently never generated.
 
 ## Sequence statistics
 
-```{autosummary}
-:toctree: api/_autosummary
-:nosignatures:
+```{eval-rst}
+.. currentmodule:: {{ module_name }}
 
-gc_content
+.. autosummary::
+   :toctree: api/_autosummary
+   :nosignatures:
+
+   gc_content
 ```

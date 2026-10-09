@@ -48,9 +48,7 @@ def gc_content(sequence: str) -> float:
     0.5
     """
     if not isinstance(sequence, str):
-        raise TypeError(
-            f"sequence must be a string, not {type(sequence).__name__}"
-        )
+        raise TypeError(f"sequence must be a string, not {type(sequence).__name__}")
 
     upper_sequence = sequence.upper()
     unexpected = sorted(set(upper_sequence) - _DNA_BASES)
