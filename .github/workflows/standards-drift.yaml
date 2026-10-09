@@ -10,6 +10,10 @@
 # silently. It warns rather than fails: a stale copy is a chore, not a defect
 # in the change under review.
 
+# Action versions are the newest floating major tag each action publishes, so
+# patch and minor fixes arrive without a change here. astral-sh/setup-uv stops
+# publishing major tags after v7 even though it has released further, so v7 is
+# deliberate rather than stale; it already runs on Node 24.
 name: Standards drift
 
 on:
@@ -28,7 +32,7 @@ jobs:
     name: Committed standards are current
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Compare dev/standards.md with the pinned standards
         run: |
           set -euo pipefail

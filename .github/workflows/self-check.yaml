@@ -4,6 +4,10 @@
 # moment it is created. If this fails, every package made from the template
 # would start out broken.
 
+# Action versions are the newest floating major tag each action publishes, so
+# patch and minor fixes arrive without a change here. astral-sh/setup-uv stops
+# publishing major tags after v7 even though it has released further, so v7 is
+# deliberate rather than stale; it already runs on Node 24.
 name: Self-check
 
 on:
@@ -20,7 +24,7 @@ jobs:
     name: Repository consistency
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: pip install pyyaml
       - run: bash dev/check-repo.sh
 
@@ -38,13 +42,13 @@ jobs:
           - variant: shiny
             extra: "--data dashboard=true --data dashboard_framework=shiny"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # copier reads the template from git history, so it needs more than
           # a shallow clone to resolve the ref being tested.
           fetch-depth: 0
 
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           python-version: "3.12"
