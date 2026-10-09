@@ -1,4 +1,4 @@
-{%- if dashboard_framework == "streamlit" %}
+{%- if dashboard_framework == "streamlit" -%}
 """Streamlit dashboard for {{ package_name }}.
 
 Run it with `make app`. Every number shown here is computed by a public
@@ -24,7 +24,7 @@ if sequence:
         st.error(str(error))
     else:
         st.markdown(f"**GC content:** {fraction:.1%}")
-{%- else %}
+{% else -%}
 """Shiny dashboard for {{ package_name }}.
 
 Run it with `make app`. Every number shown here is computed by a public
@@ -58,4 +58,4 @@ def server(input: Inputs, output: Outputs, session: Session) -> None:
 
 
 app = App(app_ui, server)
-{%- endif %}
+{% endif -%}

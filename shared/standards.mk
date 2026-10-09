@@ -25,7 +25,12 @@ UV ?= uv
 # --locked syncs the environment from uv.lock but refuses to re-resolve, so an
 # unapproved dependency edit in pyproject.toml fails loudly instead of being
 # installed silently. Run `make lock` after an approved change.
-RUN := $(UV) run --locked
+#
+# --all-extras because the dashboard's dependencies are an optional extra and
+# its tests import them. DOCS_RUN adds the docs dependency group, which uv
+# does not install by default, so a test run doesn't pay for Sphinx.
+RUN      := $(UV) run --locked --all-extras
+DOCS_RUN := $(UV) run --locked --all-extras --group docs
 
 .DEFAULT_GOAL := help
 
@@ -87,7 +92,7 @@ coverage:  ## Print test coverage and fail below COV_MIN
 # never touched and a stale build can never mask a failure.
 docs:  ## Build the HTML documentation into a temp folder
 	@out="$$(mktemp -d)"; \
-	  $(RUN) sphinx-build -b html "$(DOCS_DIR)" "$$out" && \
+	  $(DOCS_RUN) sphinx-build -b html "$(DOCS_DIR)" "$$out" && \
 	  echo "Built into $$out"
 
 # -W turns warnings into errors (same as Read the Docs' fail_on_warning) and
@@ -99,18 +104,18 @@ docs:  ## Build the HTML documentation into a temp folder
 # reports every object as missing when the API page uses autosummary.)
 docs-check:  ## Build docs with warnings as errors and verify every public object is documented
 	@out="$$(mktemp -d)"; \
-	  $(RUN) sphinx-build -b html -W --keep-going -n "$(DOCS_DIR)" "$$out/html" || exit 1; \
+	  $(DOCS_RUN) sphinx-build -b html -W --keep-going -n "$(DOCS_DIR)" "$$out/html" || exit 1; \
 	  echo "Documentation built without warnings."
 	@if [ -z "$(PKG_IMPORT)" ]; then \
 	  echo "PKG_IMPORT is unset in the Makefile, so the API page was not checked."; \
 	else \
-	  $(RUN) python -c "import importlib, pathlib, re, sys; module = importlib.import_module(sys.argv[1]); names = [n for n in getattr(module, '__all__', []) if not n.startswith('_')]; page = pathlib.Path(sys.argv[2]).read_text(); missing = [n for n in names if not re.search(r'(?<![\w.])' + re.escape(n) + r'\b', page)]; sys.exit('Public objects missing from ' + sys.argv[2] + ': ' + ', '.join(missing) + '. Add them so they appear in the reference.') if missing else print('Every public object appears in ' + sys.argv[2] + '.')" "$(PKG_IMPORT)" "$(DOCS_DIR)/api.md"; \
+	  $(DOCS_RUN) python -c "import importlib, pathlib, re, sys; module = importlib.import_module(sys.argv[1]); names = [n for n in getattr(module, '__all__', []) if not n.startswith('_')]; page = pathlib.Path(sys.argv[2]).read_text(); missing = [n for n in names if not re.search(r'(?<![\w.])' + re.escape(n) + r'\b', page)]; sys.exit('Public objects missing from ' + sys.argv[2] + ': ' + ', '.join(missing) + '. Add them so they appear in the reference.') if missing else print('Every public object appears in ' + sys.argv[2] + '.')" "$(PKG_IMPORT)" "$(DOCS_DIR)/api.md"; \
 	fi
 
 # Kept out of check-full: linkcheck needs the network, so a flaky host or an
 # offline machine would fail a gate that has nothing to do with the change.
 docs-links:  ## Check external links in the documentation (needs network)
-	@out="$$(mktemp -d)"; $(RUN) sphinx-build -b linkcheck "$(DOCS_DIR)" "$$out"
+	@out="$$(mktemp -d)"; $(DOCS_RUN) sphinx-build -b linkcheck "$(DOCS_DIR)" "$$out"
 
 # Renders one tutorial into a temporary folder, executing its code. FILTER is
 # the file name without its extension.
@@ -122,7 +127,7 @@ tutorial:  ## Render one tutorial to a temp folder: make tutorial FILTER=<name>
 	@src="$$(ls $(DOCS_DIR)/tutorials/$$FILTER.* 2> /dev/null | head -1)"; \
 	  if [ -z "$$src" ]; then echo "No tutorial named $$FILTER in $(DOCS_DIR)/tutorials/"; exit 1; fi; \
 	  out="$$(mktemp -d)"; \
-	  $(RUN) sphinx-build -b html "$(DOCS_DIR)" "$$out" "$$src" && \
+	  $(DOCS_RUN) sphinx-build -b html "$(DOCS_DIR)" "$$out" "$$src" && \
 	  echo "Rendered into $$out"
 
 app:  ## Start the dashboard app (long-running; ask the developer first)
