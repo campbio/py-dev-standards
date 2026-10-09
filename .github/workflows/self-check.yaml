@@ -57,6 +57,8 @@ jobs:
           # template's pyproject is what decides that package's dependencies,
           # so it is the thing that should invalidate the cache.
           cache-dependency-glob: "template/pyproject.toml.jinja"
+          # One cache per variant: the three jobs install different extras.
+          cache-suffix: ${{ matrix.variant }}
 
       - name: Generate a package from the template
         run: |
