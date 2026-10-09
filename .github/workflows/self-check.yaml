@@ -1,0 +1,82 @@
+# This repository's own CI. It is not a reusable workflow: packages never call
+# it. It checks that the repository is internally consistent and, more
+# importantly, that a package generated from the template is green from the
+# moment it is created. If this fails, every package made from the template
+# would start out broken.
+
+name: Self-check
+
+on:
+  push:
+    branches: [main, devel]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  consistency:
+    name: Repository consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pyyaml
+      - run: bash dev/check-repo.sh
+
+  generated-package:
+    name: Generated package (${{ matrix.variant }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: library
+            extra: "--data dashboard=false"
+          - variant: streamlit
+            extra: "--data dashboard=true --data dashboard_framework=streamlit"
+          - variant: shiny
+            extra: "--data dashboard=true --data dashboard_framework=shiny"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # copier reads the template from git history, so it needs more than
+          # a shallow clone to resolve the ref being tested.
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Generate a package from the template
+        run: |
+          uvx copier copy --defaults --quiet --vcs-ref=HEAD \
+            --data package_name=demo-pkg \
+            --data package_description="A generated package." \
+            --data author_email=nobody@example.com \
+            --data copyright_year=2026 \
+            ${{ matrix.extra }} \
+            . "$RUNNER_TEMP/demo"
+
+      - name: Run the package's own full gate
+        working-directory: ${{ runner.temp }}/demo
+        env:
+          # Use this checkout's shared files rather than the published v1 tag,
+          # so a change is tested before it is released.
+          PY_STANDARDS_BASE: file://${{ github.workspace }}
+        run: |
+          make lock
+          make check-full
+
+      - name: Confirm the Makefile guards reject unsafe input
+        working-directory: ${{ runner.temp }}/demo
+        env:
+          PY_STANDARDS_BASE: file://${{ github.workspace }}
+        run: |
+          set -u
+          fail() { echo "::error::guard did not fire: $1"; exit 1; }
+          make test-one "FILTER=a;b" > /dev/null 2>&1 && fail "FILTER metacharacter"
+          make test-one FILTER=x build > /dev/null 2>&1 && fail "test-one with another target"
+          make test SHELL=/bin/sh > /dev/null 2>&1 && fail "extra command-line variable"
+          echo "All guards fired."
