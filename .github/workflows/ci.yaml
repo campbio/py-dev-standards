@@ -44,6 +44,8 @@ jobs:
         with:
           enable-cache: true
           python-version: ${{ inputs.primary-python-version }}
+          # A distinct cache per job: otherwise these jobs race to save one key.
+          cache-suffix: lint
       - run: make lint
       - run: make typecheck
 
@@ -60,6 +62,7 @@ jobs:
         with:
           enable-cache: true
           python-version: ${{ matrix.python-version }}
+          cache-suffix: test
       - run: make test
 
   coverage:
@@ -71,6 +74,8 @@ jobs:
         with:
           enable-cache: true
           python-version: ${{ inputs.primary-python-version }}
+          # A distinct cache per job: otherwise these jobs race to save one key.
+          cache-suffix: coverage
       # The floor is COV_MIN in the package's Makefile, so the number lives
       # with the package rather than in this shared file.
       - run: make coverage
@@ -85,6 +90,8 @@ jobs:
         with:
           enable-cache: true
           python-version: ${{ inputs.primary-python-version }}
+          # A distinct cache per job: otherwise these jobs race to save one key.
+          cache-suffix: docs
       # Warnings are errors here and on Read the Docs, and every public object
       # must appear in docs/api.md.
       - run: make docs-check
