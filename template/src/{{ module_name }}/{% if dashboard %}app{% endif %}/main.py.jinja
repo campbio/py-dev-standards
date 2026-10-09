@@ -45,16 +45,27 @@ app_ui = ui.page_fluid(
 )
 
 
+def format_gc_summary(sequence: str) -> str:
+    """Describe a sequence's GC content, or say why it cannot be measured.
+
+    Presentation only: the measurement itself is {{ module_name }}.gc_content.
+    Keeping it in its own function, instead of inside the callback below, is
+    what lets `make app-test` check what the app will show without starting a
+    browser.
+    """
+    try:
+        fraction = gc_content(sequence)
+    except (TypeError, ValueError) as error:
+        return f"Cannot compute GC content: {error}"
+    return f"GC content: {fraction:.1%}"
+
+
 def server(input: Inputs, output: Outputs, session: Session) -> None:
     """Connect the inputs to {{ package_name }}'s public functions."""
 
     @render.code
     def gc_summary() -> str:
-        try:
-            fraction = gc_content(input.sequence())
-        except (TypeError, ValueError) as error:
-            return f"Cannot compute GC content: {error}"
-        return f"GC content: {fraction:.1%}"
+        return format_gc_summary(input.sequence())
 
 
 app = App(app_ui, server)

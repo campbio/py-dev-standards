@@ -39,7 +39,7 @@ def test_app_shows_an_error_for_an_invalid_sequence() -> None:
 import pytest
 from shiny import App
 
-from {{ module_name }}.app.main import app
+from {{ module_name }}.app.main import app, format_gc_summary
 
 
 @pytest.mark.app
@@ -49,7 +49,18 @@ def test_app_is_constructed() -> None:
     assert isinstance(app, App)
 
 
-# End-to-end flows (typing a sequence and reading the rendered output) use the
-# Shiny Playwright controllers and a real browser. Add them here as the app
-# grows, and keep them marked `app` so `make test` stays fast.
+@pytest.mark.app
+def test_app_reports_the_gc_content_of_the_entered_sequence() -> None:
+    assert format_gc_summary("GGCC") == "GC content: 100.0%"
+
+
+@pytest.mark.app
+def test_app_explains_an_invalid_sequence_instead_of_failing() -> None:
+    assert "X, Z" in format_gc_summary("ACGTXZ")
+
+
+# The reactive callback itself only runs inside a browser session. Flows that
+# need one (typing into the field and reading the rendered output) use the
+# Shiny Playwright controllers; add them here as the app grows, and keep them
+# marked `app` so `make test` stays fast.
 {%- endif %}
