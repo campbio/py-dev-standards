@@ -1,4 +1,4 @@
-# Python Package Development Standards v1.0
+# Python Package Development Standards v1.1
 
 Rules for developing Python packages in the Campbell lab. Claude Code loads
 this file at session start through a hook; every package also commits a copy at
@@ -8,23 +8,28 @@ in the py-dev-standards repo.
 ## Precedence
 1. Package AGENTS.md "Overrides"
 2. This file
-3. Skill defaults (Superpowers, others)
+3. Skill and plugin defaults (superbrainstorming, others)
 
 On conflict, follow the higher level and say so.
 
 ## Workflow
-1. EVALUATE, no edits. Bug: systematic-debugging, report the root cause.
-   Feature: brainstorming. Dependency change: read the upstream changelog and
-   list affected call sites. Wait for the go-ahead.
-2. PLAN: writing-plans. Cover whichever apply: code, type annotations, tests,
-   docstrings, docs pages, tutorials, CHANGELOG, version bump, dashboard,
-   checks. Wait for approval.
+1. EVALUATE, no edits. Bug: reproduce it, trace the root cause, report it
+   before proposing a fix. Feature: brainstorming. Dependency change: read the
+   upstream changelog and list affected call sites. Wait for the go-ahead.
+2. SPEC: what changes, why, and how it is tested. Cover whichever apply: code,
+   type annotations, tests, docstrings, docs pages, tutorials, CHANGELOG,
+   version bump, dashboard, checks. Small change: in chat. Larger or unsure: a
+   file in `dev/plans/`, committed after branching. A brainstorming design is
+   the spec. No step-by-step implementation plan. Wait for approval.
 3. EXECUTE: fetch the shared repo's `devel`, then branch as `fix/<topic>` or
-   `feature/<topic>`. Never work on `devel` or `main`. Small plan:
-   executing-plans. Multi-task plan: subagent-driven-development. Use TDD with
-   pytest. Make small local commits whose messages say what and why.
-4. REVIEW: requesting-code-review against the plan, then `/code-review` on the
-   branch. Fix findings, or say why one doesn't apply.
+   `feature/<topic>` before writing code. Never work on `devel` or `main`.
+   Implement from the spec and stay within it. Test first with pytest: each new
+   test must fail on its own assertion, not on an ImportError or AttributeError
+   for something that doesn't exist yet. Never weaken, skip, or delete a test to
+   make it pass; if one looks wrong, ask. Make small local commits that say what
+   and why.
+4. REVIEW: give a fresh subagent the spec to check the diff against, then run
+   `/code-review` on the branch. Fix findings, or say why one doesn't apply.
 5. HAND OFF: stop before anything leaves the machine. Give a summary, list
    anything unverified, say whether results, numbers, or plots change, and show
    `git log devel..HEAD` and `git diff devel...HEAD`. No push, PR, or merge
@@ -35,7 +40,9 @@ On conflict, follow the higher level and say so.
    never open a second PR. Merge only after CI is green and a person approves
    on GitHub. No local merges. No history rewrites after a push.
 
-Plans and designs go in `dev/plans/`, never `docs/`.
+Specs go in `dev/plans/`, never `docs/`, including `docs/specs/`. `docs/` is
+published to Read the Docs, and a page no toctree includes fails
+`make docs-check`.
 
 ## Remotes
 - Identify remotes by URL (`git remote -v`), not by name.
@@ -134,7 +141,7 @@ Audience: Python novices who copy code verbatim. The code must run as pasted.
 - Optional dependencies: `pytest.importorskip` so the suite skips cleanly when
   one is missing.
 - Never weaken an assertion, add a `skip`, or loosen a tolerance to make a test
-  pass. Report the failure instead.
+  pass. Report the failure; if the test itself looks wrong, say so and ask.
 
 ## Dashboard apps
 The app lives in `src/<package>/app/` as a real subpackage, behind an optional

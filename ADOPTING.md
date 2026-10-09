@@ -15,12 +15,14 @@ and both use the same `copier` template, so neither drifts from the other.
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
-2. **Claude Code**, and the **Superpowers plugin**, which provides the workflow
-   skills the standards refer to (brainstorming, writing plans, test-driven
-   development, code review). From inside Claude Code:
+2. **Claude Code**, and the **superbrainstorming plugin**, which provides the
+   brainstorming skill the standards use to design features, and optionally the
+   grill-me skill. Both plugins are described under "What you need on your
+   machine" in the README. From inside Claude Code:
 
    ```
-   /plugin install superpowers@claude-plugins-official
+   /plugin marketplace add harrymunro/superbrainstorming
+   /plugin install superbrainstorming@superbrainstorming
    ```
 
 `copier` needs no install: `uvx copier` runs it. The standards still make sense
