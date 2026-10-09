@@ -150,6 +150,11 @@ filterwarnings = ["error"]
 [tool.coverage.run]
 source = ["src"]
 branch = true
+{%- if dashboard %}
+# The launcher starts the framework's server in a subprocess. Covering it
+# would test subprocess, not this package.
+omit = ["src/{{ module_name }}/app/__main__.py"]
+{%- endif %}
 
 [tool.coverage.report]
 exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]
