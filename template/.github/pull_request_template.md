@@ -16,7 +16,7 @@
 - [ ] `CHANGELOG.md` updated under `## Unreleased` for user-facing changes
 - [ ] Version bumped in `pyproject.toml`
 - [ ] `uv.lock` regenerated with `make lock` if dependencies changed
-- [ ] Plan review and `/code-review` run; findings fixed or answered
+- [ ] Spec review and `/code-review` run; findings fixed or answered
 - [ ] Dashboard only: `make app-test` passes and a screenshot of the running app is attached
 
 ## ADR

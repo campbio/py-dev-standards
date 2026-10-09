@@ -96,16 +96,52 @@ your fork, and adapt the rules.
 | `.github/workflows/standards-drift.yaml` | Shared workflow: warns when a package's `dev/standards.md` is stale |
 | `.github/workflows/self-check.yaml` | This repo's own CI: consistency, plus a generated package's full gate |
 | `dev/check-repo.sh` | Checks that `template/`'s committed copies match their originals |
+| `dev/plans/` | Specs for changes to this repo |
 
 ## What you need on your machine
 
 - **[uv](https://docs.astral.sh/uv/)** for environments, locking and building.
 - **Claude Code.**
-- **The Superpowers plugin**, which provides the workflow skills referenced
-  throughout. Install it once, from inside Claude Code:
-  `/plugin install superpowers@claude-plugins-official`
+- **The superbrainstorming plugin**, which provides the brainstorming skill
+  used to design features (step 1 below). Install it once, from inside Claude
+  Code:
+
+  ```
+  /plugin marketplace add harrymunro/superbrainstorming
+  /plugin install superbrainstorming@superbrainstorming
+  ```
+- **Optional: the grill-me skill**, which you start with `/grill-me` to have
+  Claude question you about a spec or an issue you wrote, one round of numbered
+  questions at a time, until nothing is left assumed. It calls a second skill,
+  `grilling`, so link both:
+
+  ```bash
+  git clone https://github.com/mattpocock/skills.git ~/src/mattpocock-skills
+  ln -s ~/src/mattpocock-skills/skills/productivity/grill-me ~/.claude/skills/
+  ln -s ~/src/mattpocock-skills/skills/productivity/grilling ~/.claude/skills/
+  ```
+
+  Run `git pull` in that clone now and then. The `mattpocock-skills` plugin
+  installs it too, along with three dozen other skills you may not want.
 
 `copier` is run through `uvx copier`, so there is nothing to install for it.
+
+**Superpowers is optional.** Version 1.0 of these standards required the
+[Superpowers](https://github.com/obra/superpowers) plugin and named five of its
+skills in the workflow. With current models its step-by-step implementation
+plans cost a lot of context and time without improving the result (see "Write a
+spec" below), so the standards now use only its brainstorming part, through
+superbrainstorming. You can still use Superpowers if you prefer it, but install
+it or superbrainstorming, not both: each has a `brainstorming` skill and a
+session-start hook.
+
+Where a skill's defaults conflict with these standards, the standards win (see
+"Precedence" in `standards.md`). Two conflicts come up in normal use.
+Superbrainstorming writes its design to `docs/specs/` and commits it; here specs
+go in `dev/plans/`, because `docs/` is published. And it starts building as soon
+as you approve the design, where these standards first have Claude create the
+work branch (step 3). Superpowers additionally wants a detailed implementation
+plan, which step 2 replaces with a spec.
 
 The standards still make sense if a skill is missing: each step also describes
 what to do, so the process can be followed by hand.
@@ -141,14 +177,18 @@ source directory.
 ## The development process
 
 Six steps, each ending somewhere the developer can look at the work. The shape
-is deliberate: an agent that is allowed to evaluate, plan, write, review and
+is deliberate: an agent that is allowed to evaluate, specify, write, review and
 then stop produces something reviewable, while an agent that goes from a
 one-line request straight to a pull request does not.
 
 ### 1. Evaluate before writing anything
 
-No edits. For a bug, use the systematic-debugging skill and report the root
-cause. For a feature, use brainstorming. For a dependency change, read the
+No edits. For a bug, Claude reproduces it first, so the fix can be shown to
+work, then traces it to its root cause and reports that before proposing
+anything; a fix aimed at a symptom often just moves the bug. For a feature, the
+brainstorming skill asks questions one at a time until the design is clear, and
+offers two or three approaches where there is a real choice. To have your own
+idea questioned harder, run `/grill-me`, if you installed that optional skill. For a dependency change, read the
 upstream changelog and list the call sites it affects. Then wait.
 
 The point is to separate "what is actually wrong" from "what shall we do about
@@ -156,32 +196,63 @@ it". An agent that starts editing while it is still forming a hypothesis
 produces changes that are hard to review, because the diff contains both the
 investigation and the fix.
 
-### 2. Plan
+### 2. Write a spec
 
-Use the writing-plans skill. A plan covers whichever of these apply: code, type
-annotations, tests, docstrings, documentation pages, tutorials, the changelog,
-the version bump, the dashboard, and the checks to run. Then wait for approval.
+Claude writes a spec: what will change, why, and how it will be tested. It
+covers whichever of these apply: code, type annotations, tests, docstrings,
+documentation pages, tutorials, the changelog, the version bump, the dashboard,
+and the checks to run. A small change gets a few sentences in the chat. A larger
+one, or one where the approach is unclear, gets a file in `dev/plans/`,
+committed once the work branch exists. When the brainstorming skill produced a
+design, that design is the spec.
 
-Plans go in `dev/plans/` and are committed, because the plan is part of the
-record of why a change looks the way it does. They do not go in `docs/`, which
-is for users.
+A spec is not a step-by-step implementation plan. Current models do better
+building from a spec than from a script of every edit, and a long plan takes
+time to write and review and fills the context the model needs for the work
+itself. Keep the spec in proportion to the change.
+
+Specs can't go in `docs/`: that folder is published to Read the Docs, and
+`make docs-check` fails on any page no toctree includes — which is what a spec
+dropped there would be. That includes `docs/specs/`, where superbrainstorming
+saves them by default.
+
+Then wait. Review the spec before approving it: correcting a wrong approach in a
+spec takes minutes, correcting it after implementation takes hours.
 
 ### 3. Execute on a new branch
 
 Fetch the shared repository's `devel`, then branch as `fix/<topic>` or
-`feature/<topic>`. Never work on `devel` or `main` directly.
+`feature/<topic>`, before any code is written. Never work on `devel` or `main`
+directly.
+
+Claude builds from the approved spec and stays within it. Problems it notices
+elsewhere become issues rather than getting fixed on the way, which keeps the
+diff reviewable.
 
 Write the test first. For a bug fix that means a regression test that fails for
 the reason the bug exists; for a new function it means tests for the expected
-result and for the error paths. Commit in small pieces, with messages that say
-what changed and why.
+result and for the error paths. The failure has to be the right one: the
+assertion fails because the behavior is wrong, not because the function doesn't
+exist yet. In Python that distinction matters more than it looks, because a test
+for a function that hasn't been written fails at import, before pytest ever
+reaches the assertion — so the test has told you nothing.
+
+Claude never weakens, skips, or deletes a test to make it pass. If a test looks
+wrong, it says so and asks. A test edited to match the code has stopped checking
+anything.
+
+Commit in small pieces, with messages that say what changed and why.
 
 ### 4. Review
 
-Use requesting-code-review against the plan, then `/code-review` on the branch.
-Fix the findings, or say why one doesn't apply. An agent reviewing its own work
-with fresh instructions catches a surprising amount; it does not replace the
-developer's review, it just means the developer isn't the first reader.
+A fresh subagent, which hasn't watched the work happen, is given the spec and
+checks the diff against it. Then Claude runs `/code-review` on the whole branch
+and fixes what it finds before showing it to you. Where a finding doesn't apply,
+it says why. The two reviews catch different things: the first checks that the
+spec was carried out and nothing more, and `/code-review` looks for bugs and
+risks in the diff itself, including in files the spec never mentioned. A
+reviewer with a fresh context is likelier to question the work than the session
+that wrote it.
 
 ### 5. Hand off to the developer
 
@@ -418,7 +489,8 @@ it is worth more during development than it is in a user's terminal, where
 nobody reads it.
 
 Never weaken an assertion, add a skip, or loosen a tolerance to make a test
-pass. Report the failure.
+pass. Report the failure; if the test itself looks wrong, say so and ask. A test
+edited to match the code has stopped checking anything.
 
 ## Dashboard apps
 
@@ -544,8 +616,14 @@ package belong in that package's `AGENTS.md`.
 
 - [r-bioc-dev-standards](https://github.com/campbio/r-bioc-dev-standards): the
   R/Bioconductor standards this repo is modelled on
-- [Superpowers](https://github.com/obra/superpowers): workflow skills for
-  Claude Code
+- [superbrainstorming](https://github.com/harrymunro/superbrainstorming): the
+  brainstorming skill from Superpowers, without the rest of the workflow
+- [mattpocock/skills](https://github.com/mattpocock/skills): source of the
+  optional grill-me skill
+- [Superpowers](https://github.com/obra/superpowers): the full workflow plugin
+  the standards used before v1.1; optional
+- ["Opus 5.5 - is the Superpowers skill still needed?"](https://www.reddit.com/r/ClaudeAI/comments/1wt84ix/opus_55_is_the_superpowers_skill_still_needed/)
+  (r/ClaudeAI): the discussion behind the v1.1 workflow changes
 - [Scientific Python Development Guide](https://learn.scientific-python.org/development/):
   community conventions for packaging, typing and testing
 - [uv](https://docs.astral.sh/uv/), [ruff](https://docs.astral.sh/ruff/) and

@@ -22,15 +22,18 @@ same settings.
 
 ## Making a change
 
-1. Branch from `devel`, named `fix/<topic>` or `feature/<topic>`. Never work on
-   `devel` or `main`.
-2. Write a failing test first, then the code that passes it.
-3. Add an entry to `CHANGELOG.md` under `## Unreleased` for anything a user
+1. Agree a spec first: what changes, why, and how it is tested. A small change
+   needs a few sentences; a larger one gets a file in `dev/plans/`.
+2. Branch from `devel`, named `fix/<topic>` or `feature/<topic>`, before writing
+   code. Never work on `devel` or `main`.
+3. Write a failing test first, then the code that passes it. Check that it fails
+   on its assertion, not on an import of something not written yet.
+4. Add an entry to `CHANGELOG.md` under `## Unreleased` for anything a user
    would notice, and bump the version in `pyproject.toml`.
-4. Add any new public object to `docs/api.md`.
-5. Run `make check` as you go and `make check-full` before opening the pull
+5. Add any new public object to `docs/api.md`.
+6. Run `make check` as you go and `make check-full` before opening the pull
    request.
-6. Open the pull request against `devel`. `main` moves only at a release.
+7. Open the pull request against `devel`. `main` moves only at a release.
 
 Decisions that are hard to reverse — a new dependency, a change to the public
 API, a reorganization of the modules — get an
