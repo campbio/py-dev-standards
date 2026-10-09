@@ -1,0 +1,21 @@
+# Optional but recommended: `uvx pre-commit install` once per clone.
+# These run the same checks as `make lint`, so a commit cannot introduce a
+# problem CI will reject. They never replace `make check`.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace

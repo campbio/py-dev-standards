@@ -1,0 +1,51 @@
+# Installation
+
+{{ package_name }} requires Python {{ python_versions[0] }} or newer.
+
+{% if publish_pypi -%}
+```bash
+pip install {{ package_name }}
+```
+{%- if publish_conda %}
+
+Or with conda:
+
+```bash
+conda install -c conda-forge {{ package_name }}
+```
+{%- endif %}
+{%- else -%}
+```bash
+pip install git+https://github.com/{{ github_org }}/{{ package_name }}
+```
+{%- endif %}
+
+{% if dashboard -%}
+## With the dashboard
+
+The dashboard's dependencies are optional, so that importing {{ package_name }}
+in a script or notebook does not pull in a web framework:
+
+```bash
+pip install "{{ package_name }}[app]"
+```
+
+Then start it with:
+
+```bash
+{{ package_name }}-app
+```
+
+{% endif -%}
+## Development versions
+
+`main` is always the most recent release. In-progress work lives on `devel`:
+
+```bash
+pip install "git+https://github.com/{{ github_org }}/{{ package_name }}@devel"
+```
+
+Documentation for `devel` is published as the
+[latest](https://{{ package_name }}.readthedocs.io/en/latest/) version;
+documentation for the release is
+[stable](https://{{ package_name }}.readthedocs.io/en/stable/).

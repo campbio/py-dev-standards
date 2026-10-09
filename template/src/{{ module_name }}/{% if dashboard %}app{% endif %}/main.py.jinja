@@ -1,0 +1,61 @@
+{%- if dashboard_framework == "streamlit" %}
+"""Streamlit dashboard for {{ package_name }}.
+
+Run it with `make app`. Every number shown here is computed by a public
+function in :mod:`{{ module_name }}`; nothing is calculated in this file.
+"""
+
+from __future__ import annotations
+
+import streamlit as st
+
+from {{ module_name }} import gc_content
+
+st.set_page_config(page_title="{{ package_name }}")
+st.title("{{ package_name }}")
+st.write("Enter a DNA sequence to see its GC content.")
+
+sequence = st.text_input("DNA sequence", value="ACGTACGT")
+
+if sequence:
+    try:
+        fraction = gc_content(sequence)
+    except (TypeError, ValueError) as error:
+        st.error(str(error))
+    else:
+        st.markdown(f"**GC content:** {fraction:.1%}")
+{%- else %}
+"""Shiny dashboard for {{ package_name }}.
+
+Run it with `make app`. Every number shown here is computed by a public
+function in :mod:`{{ module_name }}`; nothing is calculated in this file.
+"""
+
+from __future__ import annotations
+
+from shiny import App, Inputs, Outputs, Session, render, ui
+
+from {{ module_name }} import gc_content
+
+app_ui = ui.page_fluid(
+    ui.h2("{{ package_name }}"),
+    ui.p("Enter a DNA sequence to see its GC content."),
+    ui.input_text("sequence", "DNA sequence", value="ACGTACGT"),
+    ui.output_text_verbatim("gc_summary"),
+)
+
+
+def server(input: Inputs, output: Outputs, session: Session) -> None:
+    """Connect the inputs to {{ package_name }}'s public functions."""
+
+    @render.text
+    def gc_summary() -> str:
+        try:
+            fraction = gc_content(input.sequence())
+        except (TypeError, ValueError) as error:
+            return f"Cannot compute GC content: {error}"
+        return f"GC content: {fraction:.1%}"
+
+
+app = App(app_ui, server)
+{%- endif %}

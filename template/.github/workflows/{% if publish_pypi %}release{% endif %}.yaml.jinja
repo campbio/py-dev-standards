@@ -1,0 +1,22 @@
+# Publishes to PyPI when a GitHub Release is published, using trusted
+# publishing: PyPI is configured to trust this repository, this workflow file
+# and the `pypi` environment, so no API token exists to leak.
+#
+# Register the trusted publisher on PyPI before the first release (ADOPTING.md).
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    uses: campbio/py-dev-standards/.github/workflows/release.yaml@v1
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      python-version: "{{ python_versions[-1] }}"

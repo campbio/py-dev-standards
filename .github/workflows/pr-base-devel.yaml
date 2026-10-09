@@ -1,0 +1,34 @@
+# Shared workflow: refuse pull requests aimed at the released branch.
+#
+#   jobs:
+#     base:
+#       uses: campbio/py-dev-standards/.github/workflows/pr-base-devel.yaml@v1
+#
+# `main` is the last released state and what a bare `pip install git+...` gets.
+# Everything else targets `devel`.
+
+name: Check PR base branch
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  check-base:
+    name: Base branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse pull requests aimed at main
+        if: >-
+          github.event.pull_request.base.ref == 'main' &&
+          github.event.pull_request.head.ref != 'devel' &&
+          !startsWith(github.event.pull_request.head.ref, 'release/')
+        run: |
+          echo "::error::This pull request targets main, which holds the last"
+          echo "::error::released version. Change the base branch to devel."
+          echo "::error::Only a release PR from devel or release/* targets main."
+          exit 1
+      - name: Confirm
+        run: echo "Base branch is correct."

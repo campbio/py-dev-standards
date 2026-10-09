@@ -1,0 +1,14 @@
+# Fails any pull request aimed at main, which holds the last released version.
+# Everything targets devel; only a release PR from devel targets main.
+name: Check PR base branch
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  base:
+    uses: campbio/py-dev-standards/.github/workflows/pr-base-devel.yaml@v1

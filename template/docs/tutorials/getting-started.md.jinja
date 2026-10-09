@@ -1,0 +1,65 @@
+---
+file_format: mystnb
+kernelspec:
+  name: python3
+  display_name: Python 3
+---
+
+# Getting started
+
+This page runs when the documentation is built, so everything below is real
+output from the installed version of {{ package_name }}.
+
+Replace this tutorial with one that shows what the package is actually for.
+Keep it short, keep the data small, and write it for someone who will copy the
+code one line at a time.
+
+## Installing
+
+See [Installation](../installation.md).
+
+## A first calculation
+
+Import the package:
+
+```{code-cell} python
+import {{ module_name }}
+
+{{ module_name }}.__version__
+```
+
+GC content is the fraction of a DNA sequence made up of guanine and cytosine.
+Give {{ module_name }} a sequence and it returns that fraction:
+
+```{code-cell} python
+sequence = "ACGTACGTGGCC"
+gc = {{ module_name }}.gc_content(sequence)
+gc
+```
+
+Bases recorded as `N` are unknown, so they are left out of the calculation
+rather than counted against it:
+
+```{code-cell} python
+{{ module_name }}.gc_content("GGCCNNNN")
+```
+
+If a sequence contains something that is not a DNA base, the package says so
+instead of returning a misleading number:
+
+```{code-cell} python
+:tags: [raises-exception]
+
+{{ module_name }}.gc_content("ACGT-ACGT")
+```
+
+## Session information
+
+Record the versions used, so a result can be reproduced later:
+
+```{code-cell} python
+import sys
+
+print("Python", sys.version.split()[0])
+print("{{ package_name }}", {{ module_name }}.__version__)
+```

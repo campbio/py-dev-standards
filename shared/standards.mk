@@ -53,11 +53,11 @@ test:  ## Run the full test suite
 	$(RUN) pytest
 
 # FILTER reaches pytest through the environment, never pasted into a command
-# string, and may contain only letters, digits, '.', '_', '-' and spaces.
+# string, and may contain only letters, digits, '.', '_' and '-'.
 test-one:  ## Run matching tests: make test-one FILTER=<pattern>
 	@case "$$FILTER" in \
 	  "") echo "Usage: make test-one FILTER=<pattern>"; exit 1 ;; \
-	  *[!A-Za-z0-9._\ -]*) echo "FILTER may contain only letters, digits, '.', '_', '-' and spaces."; exit 1 ;; \
+	  *[!A-Za-z0-9._-]*) echo "FILTER may contain only letters, digits, '.', '_' and '-'."; exit 1 ;; \
 	esac
 	$(RUN) pytest -k "$$FILTER"
 

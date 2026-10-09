@@ -1,0 +1,71 @@
+"""Sphinx configuration for {{ package_name }}.
+
+`make docs` builds with these settings, `make docs-check` adds -W and -n, and
+Read the Docs uses the same flags, so a page that builds locally builds there.
+"""
+
+from __future__ import annotations
+
+from importlib.metadata import version as installed_version
+
+project = "{{ package_name }}"
+author = "{{ author_name }}"
+copyright = "{{ copyright_year }}, {{ author_name }}"
+release = installed_version("{{ package_name }}")
+version = ".".join(release.split(".")[:2])
+
+extensions = [
+    "myst_nb",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.coverage",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "sphinx_copybutton",
+]
+
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "**.ipynb_checkpoints", "Thumbs.db", ".DS_Store"]
+
+# --- API reference --------------------------------------------------------
+
+# autosummary writes a stub page per object into docs/api/_autosummary, which
+# is generated and git-ignored. Never edit those files; edit the docstring.
+autosummary_generate = True
+autodoc_typehints = "description"
+autodoc_member_order = "bysource"
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+
+# `make docs-check` runs the coverage builder and fails if anything public is
+# missing from docs/api.md.
+coverage_modules = ["{{ module_name }}"]
+coverage_show_missing_items = True
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
+}
+
+# --- Prose and tutorials --------------------------------------------------
+
+myst_enable_extensions = ["colon_fence", "deflist", "dollarmath"]
+
+# Tutorials are executed at build time, so a tutorial that no longer runs is a
+# failed build rather than a page of stale output. The cache keeps rebuilds
+# quick; `make tutorial FILTER=<name>` re-runs just one.
+nb_execution_mode = "cache"
+nb_execution_raise_on_error = True
+nb_execution_timeout = 300
+
+# --- HTML -----------------------------------------------------------------
+
+html_theme = "pydata_sphinx_theme"
+html_title = "{{ package_name }}"
+html_theme_options = {
+    "github_url": "https://github.com/{{ github_org }}/{{ package_name }}",
+    "navigation_with_keys": False,
+    "show_toc_level": 2,
+}

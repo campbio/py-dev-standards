@@ -1,0 +1,119 @@
+# Copier configuration for py-dev-standards.
+#
+#   New package:        copier copy gh:campbio/py-dev-standards my-package
+#   Existing package:   copier copy gh:campbio/py-dev-standards .
+#   Later refresh:      copier update
+#
+# See ADOPTING.md. The generated files are described in README.md.
+
+_subdirectory: template
+_templates_suffix: .jinja
+_min_copier_version: "9.0.0"
+_answers_file: .copier-answers.yml
+
+_message_after_copy: |
+  Created {{ package_name }}.
+
+  Next:
+    1. git init && git add -A && git commit -m "Initial commit"   (new packages)
+    2. make lock && make sync
+    3. make check
+    4. Fill in AGENTS.md — it is the file every coding agent reads first.
+    5. Finish the GitHub, Read the Docs and PyPI setup in ADOPTING.md.
+
+_message_after_update: |
+  Updated {{ package_name }} to the current py-dev-standards.
+
+  Review the diff, then run `make lock && make check`. If dev/standards.md
+  changed, read it: the rules your agents follow have changed.
+
+package_name:
+  type: str
+  help: Distribution name, as people will type it in `pip install` (e.g. single-cell-tools)
+  validator: >-
+    {% if not (package_name | regex_search('^[a-z][a-z0-9]*(-[a-z0-9]+)*$')) %}
+    Use lowercase letters, digits and hyphens, starting with a letter.
+    {% endif %}
+
+module_name:
+  type: str
+  help: Import name (e.g. single_cell_tools)
+  default: "{{ package_name | replace('-', '_') }}"
+  validator: >-
+    {% if not (module_name | regex_search('^[a-z][a-z0-9_]*$')) %}
+    Use lowercase letters, digits and underscores, starting with a letter.
+    {% endif %}
+
+package_description:
+  type: str
+  help: One sentence describing what the package does
+
+author_name:
+  type: str
+  help: Primary author
+  default: Joshua D. Campbell
+
+author_email:
+  type: str
+  help: Contact email
+
+author_orcid:
+  type: str
+  help: Author ORCID iD, digits only (leave blank if none)
+  default: ""
+
+github_org:
+  type: str
+  help: GitHub organization or user that owns the repository
+  default: campbio
+
+python_versions:
+  type: yaml
+  help: Python versions to support; the first is the minimum
+  default:
+    - "3.11"
+    - "3.12"
+    - "3.13"
+    - "3.14"
+
+coverage_min:
+  type: int
+  help: Minimum total test coverage percentage CI will enforce
+  default: 80
+
+dashboard:
+  type: bool
+  help: Does this package ship a dashboard app?
+  default: false
+
+dashboard_framework:
+  type: str
+  help: Dashboard framework (Streamlit for simple displays, Shiny for analysis toolkits)
+  when: "{{ dashboard }}"
+  default: streamlit
+  choices:
+    Streamlit: streamlit
+    Shiny for Python: shiny
+
+publish_pypi:
+  type: bool
+  help: Publish to PyPI on each GitHub Release?
+  default: true
+
+publish_conda:
+  type: bool
+  help: Also maintain a conda-forge or bioconda feedstock?
+  default: false
+
+zenodo:
+  type: bool
+  help: Archive each release on Zenodo for citation?
+  default: true
+
+copyright_year:
+  type: str
+  help: Copyright year for the LICENSE (e.g. 2026)
+  validator: >-
+    {% if not (copyright_year | regex_search('^[0-9]{4}$')) %}
+    Enter a four-digit year.
+    {% endif %}

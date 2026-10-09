@@ -1,0 +1,19 @@
+# Citation metadata. GitHub reads this file and shows a "Cite this repository"
+# button; Zenodo reads it when it archives each release.
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "{{ package_name }}"
+abstract: "{{ package_description }}"
+type: software
+authors:
+  - family-names: "<family name>"
+    given-names: "<given names>"
+{%- if author_orcid %}
+    orcid: "https://orcid.org/{{ author_orcid }}"
+{%- endif %}
+repository-code: "https://github.com/{{ github_org }}/{{ package_name }}"
+url: "https://{{ package_name }}.readthedocs.io"
+license: MIT
+# Update `version` and `date-released` at each release (see dev/RELEASE.md).
+version: "0.1.0"
+date-released: "YYYY-MM-DD"

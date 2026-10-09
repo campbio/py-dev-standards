@@ -1,0 +1,68 @@
+"""A worked example of the conventions this package follows.
+
+Replace this module with the package's real code. It is here so a freshly
+generated package passes ``make check`` and so there is one function in the
+repository that shows the expected shape: a NumPy-style docstring with a
+runnable example, type annotations on the signature, input validation that
+names the argument and the problem, and tests that cover the error paths.
+"""
+
+from __future__ import annotations
+
+__all__ = ["gc_content"]
+
+_DNA_BASES = frozenset("ACGTN")
+
+
+def gc_content(sequence: str) -> float:
+    """Calculate the GC content of a DNA sequence.
+
+    Parameters
+    ----------
+    sequence : str
+        A DNA sequence written with the letters ``A``, ``C``, ``G``, ``T`` and
+        ``N``. Upper and lower case are both accepted.
+
+    Returns
+    -------
+    float
+        The proportion of unambiguous bases that are ``G`` or ``C``, between
+        0 and 1. ``N`` bases are ignored rather than counted as mismatches,
+        because they carry no information about base composition.
+
+    Raises
+    ------
+    TypeError
+        If `sequence` is not a string.
+    ValueError
+        If `sequence` contains a letter that is not a DNA base, or contains no
+        unambiguous bases to measure.
+
+    Examples
+    --------
+    >>> gc_content("ACGT")
+    0.5
+    >>> gc_content("GGCC")
+    1.0
+    >>> gc_content("acgtNN")
+    0.5
+    """
+    if not isinstance(sequence, str):
+        raise TypeError(
+            f"sequence must be a string, not {type(sequence).__name__}"
+        )
+
+    upper_sequence = sequence.upper()
+    unexpected = sorted(set(upper_sequence) - _DNA_BASES)
+    if unexpected:
+        raise ValueError(
+            "sequence must contain only the DNA bases A, C, G, T and N; "
+            f"found {', '.join(unexpected)}"
+        )
+
+    unambiguous = [base for base in upper_sequence if base != "N"]
+    if not unambiguous:
+        raise ValueError("sequence contains no A, C, G or T bases to measure")
+
+    gc_count = sum(1 for base in unambiguous if base in "GC")
+    return gc_count / len(unambiguous)

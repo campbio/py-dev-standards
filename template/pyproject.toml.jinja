@@ -1,0 +1,156 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "{{ package_name }}"
+version = "0.1.0"
+description = "{{ package_description }}"
+readme = "README.md"
+requires-python = ">={{ python_versions[0] }}"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "{{ author_name }}", email = "{{ author_email }}" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+{%- for version in python_versions %}
+    "Programming Language :: Python :: {{ version }}",
+{%- endfor %}
+    "Typing :: Typed",
+]
+# Runtime dependencies. Adding or removing one needs an ADR (dev/adr/), then
+# `make lock`.
+dependencies = []
+
+{% if dashboard -%}
+[project.optional-dependencies]
+# Everything the dashboard needs, kept out of the library install so importing
+# {{ module_name }} never pulls in a web framework.
+app = [
+{%- if dashboard_framework == "streamlit" %}
+    "streamlit>=1.40",
+{%- else %}
+    "shiny>=1.2",
+{%- endif %}
+]
+
+[project.scripts]
+{{ package_name }}-app = "{{ module_name }}.app.__main__:main"
+
+{% endif -%}
+[project.urls]
+Homepage = "https://github.com/{{ github_org }}/{{ package_name }}"
+Documentation = "https://{{ package_name }}.readthedocs.io"
+Source = "https://github.com/{{ github_org }}/{{ package_name }}"
+Changelog = "https://github.com/{{ github_org }}/{{ package_name }}/blob/main/CHANGELOG.md"
+Issues = "https://github.com/{{ github_org }}/{{ package_name }}/issues"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.8",
+    "twine>=6.0",
+{%- if dashboard and dashboard_framework == "shiny" %}
+    "pytest-playwright>=0.5",
+{%- endif %}
+]
+docs = [
+    "ipykernel>=6.29",
+    "myst-nb>=1.1",
+    "pydata-sphinx-theme>=0.16",
+    "sphinx>=8.1",
+    "sphinx-copybutton>=0.5",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/{{ module_name }}"]
+
+# --- Style and lint -------------------------------------------------------
+
+[tool.ruff]
+line-length = 88
+src = ["src", "tests"]
+target-version = "py{{ python_versions[0] | replace('.', '') }}"
+
+[tool.ruff.lint]
+select = [
+    "F",    # pyflakes
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "I",    # import sorting
+    "N",    # pep8 naming
+    "D",    # docstrings
+    "UP",   # pyupgrade
+    "B",    # bugbear
+    "A",    # builtin shadowing
+    "C4",   # comprehensions
+    "SIM",  # simplifications
+    "PTH",  # use pathlib
+    "NPY",  # numpy legacy API
+    "RUF",
+]
+ignore = [
+    "D105",  # magic methods need no docstring
+    "D107",  # __init__ is documented on the class
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+# Tests document themselves through their names; docs pages are prose.
+"tests/**" = ["D"]
+"docs/**" = ["A", "D"]
+{%- if dashboard %}
+# The app is wiring, not an API: it needs no docstring on every callback, and
+# Shiny's server signature uses `input`, which shadows the builtin by design.
+"src/{{ module_name }}/app/**" = ["A", "D"]
+{%- endif %}
+
+# --- Types ----------------------------------------------------------------
+
+[tool.mypy]
+python_version = "{{ python_versions[0] }}"
+files = ["src"]
+strict = true
+# warn_unreachable is deliberately off: it flags the runtime isinstance checks
+# that public functions use to give novice users a clear TypeError, because
+# mypy already believes the argument has the right type.
+# Third-party packages without type information are a fact of scientific
+# Python. Add one override block per package rather than weakening the whole
+# configuration, and say in the ADR or PR why the stubs are unavailable:
+#
+#   [[tool.mypy.overrides]]
+#   module = ["anndata.*", "scanpy.*"]
+#   ignore_missing_imports = true
+
+# --- Tests ----------------------------------------------------------------
+
+[tool.pytest.ini_options]
+# src is collected too so --doctest-modules runs every Examples block in a
+# docstring. The standards require those examples to work as pasted; this is
+# what checks it.
+testpaths = ["tests", "src"]
+{%- if dashboard %}
+addopts = "-ra --strict-markers --strict-config --doctest-modules --ignore=src/{{ module_name }}/app"
+{%- else %}
+addopts = "-ra --strict-markers --strict-config --doctest-modules"
+{%- endif %}
+markers = [
+    "app: tests for the dashboard app (run with `make app-test`)",
+    "slow: tests too slow for the normal development loop",
+]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]
+show_missing = true
