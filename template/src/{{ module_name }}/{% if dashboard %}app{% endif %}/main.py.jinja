@@ -41,14 +41,14 @@ app_ui = ui.page_fluid(
     ui.h2("{{ package_name }}"),
     ui.p("Enter a DNA sequence to see its GC content."),
     ui.input_text("sequence", "DNA sequence", value="ACGTACGT"),
-    ui.output_text_verbatim("gc_summary"),
+    ui.output_code("gc_summary"),
 )
 
 
 def server(input: Inputs, output: Outputs, session: Session) -> None:
     """Connect the inputs to {{ package_name }}'s public functions."""
 
-    @render.text
+    @render.code
     def gc_summary() -> str:
         try:
             fraction = gc_content(input.sequence())
