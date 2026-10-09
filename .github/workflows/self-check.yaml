@@ -20,7 +20,7 @@ jobs:
     name: Repository consistency
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: pip install pyyaml
       - run: bash dev/check-repo.sh
 
@@ -38,16 +38,21 @@ jobs:
           - variant: shiny
             extra: "--data dashboard=true --data dashboard_framework=shiny"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # copier reads the template from git history, so it needs more than
           # a shallow clone to resolve the ref being tested.
           fetch-depth: 0
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v10
         with:
           enable-cache: true
           python-version: "3.12"
+          # The generated package lives outside the workspace, so there is no
+          # uv.lock here for the default glob to key the cache on. The
+          # template's pyproject is what decides that package's dependencies,
+          # so it is the thing that should invalidate the cache.
+          cache-dependency-glob: "template/pyproject.toml.jinja"
 
       - name: Generate a package from the template
         run: |

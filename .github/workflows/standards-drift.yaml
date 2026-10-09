@@ -28,7 +28,7 @@ jobs:
     name: Committed standards are current
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Compare dev/standards.md with the pinned standards
         run: |
           set -euo pipefail
